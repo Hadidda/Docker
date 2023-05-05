@@ -1,0 +1,88 @@
+# Base image https://hub.docker.com/u/rocker/
+FROM ubuntu:18.04
+
+
+#Update APT
+RUN apt-get update
+RUN apt-get install -y \
+    gnupg \
+    sudo \
+    nano \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    dirmngr \
+    apt-transport-https \
+    ca-certificates \
+    software-properties-common \
+    gpg \
+    libtiff-dev \
+    rpm \
+    libfontconfig1-dev \
+    libharfbuzz-dev \
+    libfribidi-dev \
+    alien \
+    libaio1 \
+    wget
+
+#Create new User
+RUN useradd -m rpt
+RUN sudo usermod -aG sudo rpt
+RUN visudo
+RUN echo 'rpt ALL =(ALL) NOPASSWD:ALL' | tee -a /etc/sudoers
+USER rpt
+
+#Install R 
+RUN sudo gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+RUN sudo gpg -a --export E298A3A825C0D65DFD57CBB651716619E084DAB9 | sudo apt-key add -
+RUN sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu/ bionic-cran35/'
+RUN sudo apt-get update
+
+# run with no questions use DEBIAN_FRONTEND=noninteractive
+RUN sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    r-base \
+    r-base-core \
+    r-base-dev \
+    r-recommended \
+    build-essential
+
+USER root
+
+    #Copy Files
+COPY . /TestDoc
+
+#Install Oracle Client 12.2.0.1.0
+RUN alien -i /TestDoc/Oracle2/oracle-instantclient12.2-basic-12.2.0.1.0-1.x86_64.rpm
+RUN alien -i /TestDoc/Oracle2/oracle-instantclient12.2-devel-12.2.0.1.0-1.x86_64.rpm       
+    
+##R Lib to Path
+ENV PATH=/usr/local/lib/R/site-library:$PATH
+
+##Oracle Drivers
+ENV OCI_LIB64=/usr/lib/oracle/12.2/client64/lib
+ENV OCI_LIB=/usr/lib/oracle/12.2/client64/lib
+ENV OCI_INC=/usr/include/oracle/12.2/client64
+ENV ORACLE_HOME=/usr/lib/oracle/12.2/client64
+ENV TNS_ADMIN=/Testdoc/TNS
+ENV LD_LIBRARY_PATH=/usr/lib/oracle/12.2/client64/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH_64=/usr/lib/oracle/12.2/client64/lib:$LD_LIBRARY_PATH_64
+
+
+#Set directory
+WORKDIR /TestDoc
+
+##Install R Packages
+RUN R -e "install.packages('DBI',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('xtable',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('tidyverse',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('readxl',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('lubridate',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('blastula',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('stringr',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('htmlTable',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('prompt',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('glue',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+RUN R -e "install.packages('ROracle',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+
+#Run script
+RUN Rscript TestR.R

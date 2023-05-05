@@ -1,0 +1,56 @@
+To install oracle instant client in a dockerfile you will need to download the rpm files for the version you want to install and add installation steps and environment variables to your dockerfile.
+
+*Note you will also want to include your TNS names .ora file in your image for connecting to a database.
+
+Download RPM Files:
+
+Go to this link for the downloads of basic and sdk(devel) rpm files:
+
+https://www.oracle.com/database/technologies/instant-client/linux-x86-64-downloads.html
+
+*Note I have only tested 12.2.0.1.0
+
+you will need to save these in your dockerfile working directory
+
+I suggest the following path hierarchy :
+
+~<dockerfolder>/Oracle
+
+ex. C:\Users\HADIDDX\OneDrive - Abbott\Documents\Test Docker\Oracle
+
+*note remember this location and file names for the dockerfile
+
+TNS Names:
+
+Copy your TNS names file into your dockerfile directory as well to clone into the image.
+
+I recommend ~<dockerfolder>/TNS
+
+ex. C:\Users\HADIDDX\OneDrive - Abbott\Documents\Test Docker\TNS
+
+Docker file code:
+
+First you need to copy your dockerfile directory to the image:
+
+COPY . /<Name to give directory>  *Note a period means copy current working directory
+#Copy Files
+COPY . /TestDoc #Name of directory
+Next you will need to install the drivers using the alien ubuntu package and the option -i:
+
+RUN alien -i <file location/name.filetype>
+
+Ex.
+#Install Oracle Client 12.2.0.1.0
+RUN alien -i /TestDoc/Oracle/oracle-instantclient12.2-basic-12.2.0.1.0-1.x86_64.rpm
+RUN alien -i /TestDoc/Oracle/oracle-instantclient12.2-devel-12.2.0.1.0-1.x86_64.rpm
+Lastly you will need to set environment variables for the installation location of the drivers:
+
+##Oracle Drivers
+ENV OCI_LIB64=/usr/lib/oracle/12.2/client64/lib
+ENV OCI_LIB=/usr/lib/oracle/12.2/client64/lib
+ENV OCI_INC=/usr/include/oracle/12.2/client64
+ENV ORACLE_HOME=/usr/lib/oracle/12.2/client64
+ENV TNS_ADMIN=/Testdoc/TNS
+ENV LD_LIBRARY_PATH=/usr/lib/oracle/12.2/client64/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH_64=/usr/lib/oracle/12.2/client64/lib:$LD_LIBRARY_PATH_64
+now you should be able to install ROracle on your image and connect to oracle databases in R.

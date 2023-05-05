@@ -1,0 +1,48 @@
+first you need to update apt and install required ubuntu packages:
+
+RUN apt-get update
+RUN apt-get install -y \
+    gnupg \
+    sudo \
+    wget \
+    nano \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    dirmngr \
+    apt-transport-https \
+    ca-certificates \
+    software-properties-common \
+    curl \
+    gpg \
+    wget
+next you need to create a new user and give it admin/sudo privledges:
+
+#Create new User
+RUN useradd -m rpt
+RUN sudo usermod -aG sudo rpt
+RUN visudo
+RUN echo 'rpt ALL =(ALL) NOPASSWD:ALL' | tee -a /etc/sudoers
+USER rpt
+next you need to grab the cran key required to connect to cran and set the sepecific repo:
+
+*Note this example is using 18.04 ubuntu (bionic) and downloading 3.6.0 r (cran35)
+
+#Pull required repositories to update from
+RUN sudo gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+RUN sudo gpg -a --export E298A3A825C0D65DFD57CBB651716619E084DAB9 | sudo apt-key add -
+RUN sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu/ bionic-cran35/'
+Next you will want to apt update and install R:
+
+RUN sudo apt-get install -y --no-install-recommends \
+    r-base \
+    r-base-dev \
+    r-recommended \
+    build-essential
+Next you will want to switch back to root user to be able to install packages:
+
+USER root
+Next you will want to install required R packages:
+
+#installing R packages
+ RUN R -e "install.packages('DBI',dependencies=TRUE, repos='http://cran.rstudio.com/')"

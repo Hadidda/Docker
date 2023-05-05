@@ -1,0 +1,7 @@
+Use the following line inside your docker file:
+
+RUN R -e "install.packages('packe_Name',dependencies=TRUE, repos='http://cran.rstudio.com/')"
+Make sure to add your lib to path using the following:
+
+##R Lib to Path
+ENV PATH=/usr/local/lib/R/site-library:$PATH
